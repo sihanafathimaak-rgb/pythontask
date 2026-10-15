@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Automated File Organizer  -  Systems Utility & Automation
 Organizes files into Images / Documents / Archives / Media / Code (+ Others)
@@ -21,7 +20,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
-# ------------------------------------------------------------------ rules
 CATEGORIES = {
     "Images": {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".webp",
                ".svg", ".heic", ".ico", ".raw"},
@@ -41,9 +39,6 @@ EXT_MAP = {ext: cat for cat, exts in CATEGORIES.items() for ext in exts}
 
 def categorize(path: Path) -> str:
     return EXT_MAP.get(path.suffix.lower(), OTHER)
-
-
-# ------------------------------------------------------------------ logging
 class Log:
     """Prints to the console and (optionally) appends to a log file."""
 
@@ -61,8 +56,6 @@ class Log:
         if self.fh:
             self.fh.close()
 
-
-# ------------------------------------------------------------------ planning
 @dataclass
 class Op:
     src: Path
@@ -91,7 +84,7 @@ def unique_path(dest: Path, strategy: str, reserved: set):
         cand = dest.with_name(f"{stem}_{stamp}{suffix}")
         if not taken(cand):
             return cand, True
-        stem = f"{stem}_{stamp}"           # same second -> add counter too
+        stem = f"{stem}_{stamp}"           
     n = 1
     while True:
         cand = dest.with_name(f"{stem}_{n}{suffix}")
@@ -130,7 +123,7 @@ def scan(source: Path, target: Path, recursive: bool, include_hidden: bool,
                 if dp.is_symlink():
                     skipped.append((dp, "symlinked directory"))
                 elif dp.resolve() in skip_dirs:
-                    continue                      # already-organized folders
+                    continue                      
                 elif d.startswith(".") and not include_hidden:
                     skipped.append((dp, "hidden directory"))
                 else:
@@ -164,8 +157,6 @@ def build_plan(files, target: Path, strategy: str):
         ops.append(Op(src, dest, cat, renamed))
     return ops
 
-
-# ------------------------------------------------------------------ output
 def show_plan(ops, skipped, errors, source, target, log, label):
     log.write(f"\n{label} planned operations ({len(ops)} file(s)):")
     log.write("-" * 70)
@@ -192,7 +183,7 @@ def execute(ops, strategy, source, target, log):
         try:
             op.dest.parent.mkdir(parents=True, exist_ok=True)
             dest = op.dest
-            if dest.exists():                   # changed since planning
+            if dest.exists():                   
                 dest, _ = unique_path(dest, strategy, set())
             shutil.move(str(op.src), str(dest))
             stats["moved"] += 1
@@ -213,7 +204,6 @@ def execute(ops, strategy, source, target, log):
     return stats
 
 
-# ------------------------------------------------------------------ test dir
 def make_test_dir(path: Path):
     path.mkdir(parents=True, exist_ok=True)
     (path / "Images").mkdir(exist_ok=True)
@@ -240,8 +230,6 @@ def make_test_dir(path: Path):
     print(f"Try:  python file_organizer.py \"{path}\" --dry-run")
     print(f"Then: python file_organizer.py \"{path}\" --recursive")
 
-
-# ------------------------------------------------------------------ CLI
 def prompt_yes_no(question, default=False):
     hint = "Y/n" if default else "y/N"
     ans = input(f"{question} [{hint}]: ").strip().lower()
@@ -316,8 +304,6 @@ def main(argv=None):
         print(f"Error: target '{target}' is not a folder.")
         return 2
 
-    # Log file: real runs log by default; dry-runs only when --log is given
-    # (so a dry-run leaves the disk untouched).
     log_path = None
     if not args.no_log:
         if args.log:
